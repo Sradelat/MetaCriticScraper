@@ -1,80 +1,102 @@
 from bs4 import BeautifulSoup
 import requests
 import time
-# TODO which platform links?
+import csv
 
 # ACCESSES HTML CODE
 # TooManyRequests error required me to find headers in devtools->network->click top name of waterfall->request headers
-headers = {  # infinite redirects to MetaCritic without headers
-    "Authority": "www.metacritic.com",
-    "Method": "GET",
-    "Path": "/",
-    "Scheme": "https",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,applic"
-              "ation/signed-exchange;v=b3;q=0.7",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Cache-Control": "max-age=0",
-    "Cookie": "Geo={%22region%22:%22MA%22%2C%22city%22:%22malden%22%2C%22country_name%22:%22united states%22%2C%22coun"
-              "try%22:%22US%22%2C%22continent%22:%22NA%22}; mc_s_s=c_2; usprivacy=1YNY; wikia_beacon_id=oPVM8t5roi; _"
-              "cb=DqhqFwCbS4NVC8d-Ad; _li_dcdm_c=.metacritic.com; _lc2_fpi=9c17cb2c9960--01h17md63yaryzn6zrvdmtk6ng; "
-              "__utmc=15671338; __utmz=15671338.1684957207.1.1.utmcsr=google|utmccn=(organic)|utmcmd=organic|utmctr=("
-              "not%20provided); _au_1d=AU1D-0100-001684957207-W9TTVVM4-TTWJ; __li_idex_cache_e30={%22unifiedId%22:%22"
-              "RixLMmIrzI7izxRHyWvjsivJLLtX9A5tRpZ0Gw%22}; _ga=GA1.2.1186384487.1684957207; _gid=GA1.2.1096701357.168"
-              "4957207; _pbjs_userid_consent_data=3524755945110770; _au_last_seen_pixels=eyJhcG4iOjE2ODQ5NTcyMDcsInR0"
-              "ZCI6MTY4NDk1NzIwNywicHViIjoxNjg0OTU3MjA3LCJhZHgiOjE2ODQ5NTcyMDcsInJ1YiI6MTY4NDk1NzIwNywidGFwYWQiOjE2OD"
-              "Q5NTcyMDcsImdvbyI6MTY4NDk1NzIwNywib3BlbngiOjE2ODQ5NTcyMDcsIm1lZGlhbWF0aCI6MTY4NDk1NzIwNywiYWRvIjoxNjg0"
-              "OTU3MjEwLCJ1bnJ1bHkiOjE2ODQ5NTcyMTAsInNvbiI6MTY4NDk1NzIxMCwiX2ZhbmRvbS1jb20iOjE2ODQ5NTcyMTB9; ctk=NjQ"
-              "2ZTY4MTE0OTY0NmQwOGRiYjcyYWE3NWUzOA%3D%3D; OneTrustWPCCPAGoogleOptOut=false; __gpi=UID=00000c322449115"
-              "8:T=1684957214:RT=1684957214:S=ALNI_MZn6pjwyZmszcVWTw8EQEM0vif91A; _cc_id=51c4835ea3ac921781d540d60421"
-              "6aa3; panoramaId_expiry=1685562016511; panoramaId=92a9438e23ccd7d87ebff19b346416d539381ac34d0b7c640081"
-              "8e4c1653262c; panoramaIdType=panoIndiv; __gads=ID=9465a27a628a06a5:T=1684957214:RT=1684957319:S=ALNI_M"
-              "ZLeadqhhpp7bSWUFkne-Ibpw42qA; tmpid=168495747233251; cdn_device=desktop; country_code=us; auth.strateg"
-              "y=local; sessionId=457ea99a-46fd-4d00-9c1d-950410822122; _cb_svref=null; __utma=15671338.1186384487.16"
-              "84957207.1684957207.1684961433.2; _BB.bs={%22session%22:%22h%22%2C%22subses%22:%222%22}; __li_idex_cac"
-              "he_eyJxZiI6IjAuMyIsInJlc29sdmUiOiJzaGExIn0={}; __li_idex_cache_eyJxZiI6IjAuMyIsInJlc29sdmUiOiJtZDUifQ="
-              "{}; __li_idex_cache_eyJxZiI6IjAuMyIsInJlc29sdmUiOiJzaGEyIn0={}; metapv=20; pvNumber=2; pvNumberGlobal="
-              "2; OptanonConsent=isGpcEnabled=0&datestamp=Wed+May+24+2023+16%3A52%3A08+GMT-0400+(Eastern+Daylight+Tim"
-              "e)&version=202303.2.0&browserGpcFlag=0&isIABGlobal=false&hosts=&landingPath=NotLandingPage&groups=C000"
-              "1%3A1%2CC0003%3A1%2CC0002%3A1%2CC0004%3A1%2CC0005%3A1&AwaitingReconsent=false; _chartbeat2=.1684957206"
-              "600.1684961528887.1.By3slhDjvCDMDE-M-OfHqDBk8A7m.2; __utmb=15671338.2.10.1684961433; _BB.d={%22ttag%22"
-              ":%22%22%2C%22ftag%22:%22%22%2C%22pv%22:%222%22}; amp_b9a939=xME4gyoot_9l-TSE-TxdKJ...1h17oe5h1.1h17oh3"
-              "nr.p.1.q; cto_bundle=2N66Rl9WU3Q5aUh0MTdPd3BlWUlUeG5jUHlTQmdCV3Nmcm45eGtvdWRBSWlZaHJLaFRzbHdVZ3ZhZ1YxS"
-              "2t2JTJCYjhJTkNWa2l3R2hCJTJCaEFkQjNDdlpmbGpaU1JPZGJ0UEFkdjV2cyUyQjlSQUlkZTNsUnU5T2pGTjFYTzNVNlAxSkF2RWs"
-              "0RFJJWGk2QVZocXpWOTJBSGxsNHIyWnclM0QlM0Q",
-    "Sec-Ch-Ua": '"Google Chrome";v="113", "Chromium";v="113", "Not-A.Brand";v="24"',
-    "Sec-Ch-Ua-Mobile": "?0",
-    "Sec-Ch-Ua-Platform": '"Windows"',
-    "Sec-Fetch-Dest": "document",
-    "Sec-Fetch-Mode": "navigate",
-    "Sec-Fetch-Site": "none",
-    "Sec-Fetch-User": "?1",
-    "Upgrade-Insecure-Requests": "1",
+headers = {  # infinite redirects to MetaCritic without headers - TODO don't actually need all these
+    # "Authority": "www.metacritic.com",
+    # "Method": "GET",
+    # "Path": "/",
+    # "Scheme": "https",
+    # "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,applic"
+    #           "ation/signed-exchange;v=b3;q=0.7",
+    # "Accept-Encoding": "gzip, deflate, br",
+    # "Accept-Language": "en-US,en;q=0.9",
+    # "Cache-Control": "max-age=0",
+    # "Cookie": "Geo={%22region%22:%22MA%22%2C%22city%22:%22malden%22%2C%22country_name%22:%22united states%22%2C%22coun"
+    #           "try%22:%22US%22%2C%22continent%22:%22NA%22}; mc_s_s=c_2; usprivacy=1YNY; wikia_beacon_id=oPVM8t5roi; _"
+    #           "cb=DqhqFwCbS4NVC8d-Ad; _li_dcdm_c=.metacritic.com; _lc2_fpi=9c17cb2c9960--01h17md63yaryzn6zrvdmtk6ng; "
+    #           "__utmc=15671338; __utmz=15671338.1684957207.1.1.utmcsr=google|utmccn=(organic)|utmcmd=organic|utmctr=("
+    #           "not%20provided); _au_1d=AU1D-0100-001684957207-W9TTVVM4-TTWJ; __li_idex_cache_e30={%22unifiedId%22:%22"
+    #           "RixLMmIrzI7izxRHyWvjsivJLLtX9A5tRpZ0Gw%22}; _ga=GA1.2.1186384487.1684957207; _gid=GA1.2.1096701357.168"
+    #           "4957207; _pbjs_userid_consent_data=3524755945110770; _au_last_seen_pixels=eyJhcG4iOjE2ODQ5NTcyMDcsInR0"
+    #           "ZCI6MTY4NDk1NzIwNywicHViIjoxNjg0OTU3MjA3LCJhZHgiOjE2ODQ5NTcyMDcsInJ1YiI6MTY4NDk1NzIwNywidGFwYWQiOjE2OD"
+    #           "Q5NTcyMDcsImdvbyI6MTY4NDk1NzIwNywib3BlbngiOjE2ODQ5NTcyMDcsIm1lZGlhbWF0aCI6MTY4NDk1NzIwNywiYWRvIjoxNjg0"
+    #           "OTU3MjEwLCJ1bnJ1bHkiOjE2ODQ5NTcyMTAsInNvbiI6MTY4NDk1NzIxMCwiX2ZhbmRvbS1jb20iOjE2ODQ5NTcyMTB9; ctk=NjQ"
+    #           "2ZTY4MTE0OTY0NmQwOGRiYjcyYWE3NWUzOA%3D%3D; OneTrustWPCCPAGoogleOptOut=false; __gpi=UID=00000c322449115"
+    #           "8:T=1684957214:RT=1684957214:S=ALNI_MZn6pjwyZmszcVWTw8EQEM0vif91A; _cc_id=51c4835ea3ac921781d540d60421"
+    #           "6aa3; panoramaId_expiry=1685562016511; panoramaId=92a9438e23ccd7d87ebff19b346416d539381ac34d0b7c640081"
+    #           "8e4c1653262c; panoramaIdType=panoIndiv; __gads=ID=9465a27a628a06a5:T=1684957214:RT=1684957319:S=ALNI_M"
+    #           "ZLeadqhhpp7bSWUFkne-Ibpw42qA; tmpid=168495747233251; cdn_device=desktop; country_code=us; auth.strateg"
+    #           "y=local; sessionId=457ea99a-46fd-4d00-9c1d-950410822122; _cb_svref=null; __utma=15671338.1186384487.16"
+    #           "84957207.1684957207.1684961433.2; _BB.bs={%22session%22:%22h%22%2C%22subses%22:%222%22}; __li_idex_cac"
+    #           "he_eyJxZiI6IjAuMyIsInJlc29sdmUiOiJzaGExIn0={}; __li_idex_cache_eyJxZiI6IjAuMyIsInJlc29sdmUiOiJtZDUifQ="
+    #           "{}; __li_idex_cache_eyJxZiI6IjAuMyIsInJlc29sdmUiOiJzaGEyIn0={}; metapv=20; pvNumber=2; pvNumberGlobal="
+    #           "2; OptanonConsent=isGpcEnabled=0&datestamp=Wed+May+24+2023+16%3A52%3A08+GMT-0400+(Eastern+Daylight+Tim"
+    #           "e)&version=202303.2.0&browserGpcFlag=0&isIABGlobal=false&hosts=&landingPath=NotLandingPage&groups=C000"
+    #           "1%3A1%2CC0003%3A1%2CC0002%3A1%2CC0004%3A1%2CC0005%3A1&AwaitingReconsent=false; _chartbeat2=.1684957206"
+    #           "600.1684961528887.1.By3slhDjvCDMDE-M-OfHqDBk8A7m.2; __utmb=15671338.2.10.1684961433; _BB.d={%22ttag%22"
+    #           ":%22%22%2C%22ftag%22:%22%22%2C%22pv%22:%222%22}; amp_b9a939=xME4gyoot_9l-TSE-TxdKJ...1h17oe5h1.1h17oh3"
+    #           "nr.p.1.q; cto_bundle=2N66Rl9WU3Q5aUh0MTdPd3BlWUlUeG5jUHlTQmdCV3Nmcm45eGtvdWRBSWlZaHJLaFRzbHdVZ3ZhZ1YxS"
+    #           "2t2JTJCYjhJTkNWa2l3R2hCJTJCaEFkQjNDdlpmbGpaU1JPZGJ0UEFkdjV2cyUyQjlSQUlkZTNsUnU5T2pGTjFYTzNVNlAxSkF2RWs"
+    #           "0RFJJWGk2QVZocXpWOTJBSGxsNHIyWnclM0QlM0Q",
+    # "Sec-Ch-Ua": '"Google Chrome";v="113", "Chromium";v="113", "Not-A.Brand";v="24"',
+    # "Sec-Ch-Ua-Mobile": "?0",
+    # "Sec-Ch-Ua-Platform": '"Windows"',
+    # "Sec-Fetch-Dest": "document",
+    # "Sec-Fetch-Mode": "navigate",
+    # "Sec-Fetch-Site": "none",
+    # "Sec-Fetch-User": "?1",
+    # "Upgrade-Insecure-Requests": "1",
     "User-Agent":
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36"
 }
 
-list_URL = "https://www.metacritic.com/browse/games/score/metascore/all/ps5/filtered"
-
-list_page = requests.get(list_URL, headers=headers)
+list_URL = [
+    "https://www.metacritic.com/browse/games/score/metascore/all/ps5/filtered",
+    # "https://www.metacritic.com/browse/games/score/metascore/all/pc/filtered",
+    # "https://www.metacritic.com/browse/games/score/metascore/all/switch/filtered",
+    # "https://www.metacritic.com/browse/games/score/metascore/all/xbox-series-x/filtered",
+    # "https://www.metacritic.com/browse/games/score/metascore/all/ps4/filtered",
+    # "https://www.metacritic.com/browse/games/score/metascore/all/xboxone/filtered"
+]
+input(f"Press enter to send request for URL list. ({len(list_URL)} requests)")
 
 # LINK LIST CREATOR
-parser = BeautifulSoup(list_page.text, "html.parser")
-
-raw_list = parser.find_all("a", attrs="title")
-
+# link_list = ["https://www.metacritic.com/game/playstation-5/elden-ring"]  # for testing
 link_list = []
-for game in raw_list:
-    link_list.append("https://www.metacritic.com" + game["href"])
-
+for url in list_URL:
+    list_page = requests.get(url, headers=headers)
+    parser = BeautifulSoup(list_page.text, "html.parser")
+    raw_list = parser.find_all("a", attrs="title")
+    for game in raw_list:
+        link_list.append("https://www.metacritic.com" + game["href"])
+    time.sleep(10)
 print(link_list)
 
 
 # PARSES HTML FOR FUTURE COLUMNS
+input(f"Press enter to initiate link list loop. ({len(link_list)} requests)")
+
+csv_headers = [
+    {"title": "",
+     "developer": "",
+     "platform": "",
+     "release_date": "",
+     "critic_score": "",
+     "number_of_critics": "",
+     "user_score": "",
+     "number_of_users": "",
+     "player_mode": "",
+     "esrb_rating": ""}
+    ]
 
 for url in link_list:
     value_page = requests.get(url, headers=headers)
     value_parser = BeautifulSoup(value_page.text, "html.parser")
+    # COLUMN VARIABLES
     meta_score = value_parser.find(itemprop="ratingValue")
     user_score = value_parser.find("div", attrs={"class": "metascore_w user large game positive"})
     title = value_parser.find("h1")
@@ -85,7 +107,25 @@ for url in link_list:
     platform = value_parser.find("span", attrs={"class": "platform"}).find("a")
     critics = value_parser.find("span", string="based on").find_next().find_next("span")
     users = value_parser.find("div", attrs={"class": "userscore_wrap feature_userscore"}).find_all("a")[1]
-    # TODO Get ESRB Rating, split genres in Python and create separate table with Title + Genres
+    esrb = value_parser.find("span", string="Rating:").find_next_sibling()
+    # WRITE CSV
+    categories = [  # TODO genres gets its own file?
+        {"title": title,
+         "developer": developer,
+         "platform": platform,
+         "release_date": release,
+         "critic_score": meta_score,
+         "number_of_critics": critics,
+         "user_score": user_score,
+         "number_of_users": users,
+         "player_mode": players,  # not all entries will have this - remove?
+         "esrb_rating": esrb}
+    ]
+    with open("Metacritic_Games.csv", "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=categories[0].keys())
+        writer.writerow(categories[0])
+
+    # TODO split genres in Python and create separate table with Title + Genres
 
     print(
           f"Title: {title.string}\n"
@@ -94,7 +134,8 @@ for url in link_list:
           f"Metascore: {meta_score.string} with {critics.string.strip()} Reviews\n"
           f"User score: {user_score.string} with {users.string.split()[0]} Ratings\n"
           f"Release Date: {release.string}\n"
-          f"Players: {players.string}"
+          f"Players: {players.string}\n"
+          f"ESRB Rating: {esrb.string}"
     )
     genre = "Genre(s): "
     for i in raw_genre:
@@ -104,6 +145,3 @@ for url in link_list:
             genre += f"{i.string}, \n"
     print(genre)
     time.sleep(10)
-
-# https://www.metacritic.com/game/switch/the-legend-of-zelda-tears-of-the-kingdom  for use next time
-
