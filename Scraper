@@ -85,6 +85,7 @@ for url in link_list:
         print("UNRELEASED GAME DETECTED.")
         continue
     formatted_date = datetime_release.strftime("%m/%d/%Y")  # formatted as desired
+    # Date format ended up not being compatible with SQLite. WHOOPS
 
     meta_score = float(value_parser.find(itemprop="ratingValue").string)
     critics = int(value_parser.find("span", string="based on").find_next().find_next("span").string.strip())
@@ -103,7 +104,7 @@ for url in link_list:
     except AttributeError:  # accepting null values on player modes
         players = ""
         print("NULL VALUE DETECTED.")
-        
+
     try:
         esrb = value_parser.find("span", string="Rating:").find_next_sibling().string
     except AttributeError:  # accepting null values on esrb ratings
@@ -129,7 +130,7 @@ for url in link_list:
             "number_of_critics": critics,
             "user_score": user_score,
             "number_of_users": users,
-            "player_mode": players, 
+            "player_mode": players,
             "esrb_rating": esrb,
             "genre": genres  # comma escape happens automatically - noice
          }
@@ -160,21 +161,4 @@ for url in link_list:
 
     # DELAY
     print("\nWaiting..\n")  # Please don't block me
-    time.sleep(random.choice(choices)) 
-
-# SQL Query for table import - change path and title 'Test' as needed
-# select import('C:\Users\shawn\PycharmProjects\Scrape\Metacritic_Games.csv', 'CSV', 'Test', 'UTF-8',"")
-
-# SQL Query for column data types
-# CREATE TABLE test(
-#      "title" TEXT,
-#      "developer" TEXT,
-#      "platform" TEXT,
-#      "release_date" TEXT,  # TODO not sure about this one
-#      "critic_score" REAL,
-#      "number_of_critics" INTEGER,
-#      "user_score" REAL,
-#      "number_of_users" INTEGER,
-#      "player_mode" TEXT,
-#      "esrb_rating" TEXT,
-#      "genre" TEXT)
+    time.sleep(random.choice(choices))
