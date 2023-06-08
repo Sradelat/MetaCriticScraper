@@ -1,0 +1,78 @@
+*SQL Query for column data types
+    CREATE TABLE test(
+         "title" TEXT,
+         "developer" TEXT,
+         "platform" TEXT,
+         "release_date" TEXT,
+         "critic_score" REAL,
+         "number_of_critics" INTEGER,
+         "user_score" REAL,
+         "number_of_users" INTEGER,
+         "player_mode" TEXT,
+         "esrb_rating" TEXT,
+         "genre" TEXT)
+
+*SQL Query for table import - change path and title 'Test' as needed
+    select import('C:\Users\shawn\PycharmProjects\Scrape\Metacritic_Games.csv', 'CSV', 'Test', 'UTF-8',"")
+
+*Experimenting with updates
+    Update Raw_Games
+    SET esrb_rating = NULL
+    WHERE esrb_rating = ""
+
+    UPDATE Raw_Games
+    SET player_mode = NULL
+    WHERE player_mode = ""
+
+*Find how many duplicates per title
+*5:
+  Grand Theft Auto V
+  Persona 5 Royal
+*4:
+  Tony Hawk's Pro Skater 1 + 2
+  Okami HD
+  Hades
+    SELECT title, COUNT(title) as count from raw_games
+    GROUP BY title
+    ORDER BY count desc
+
+*Find popularity categorized by ESRB rating
+    SELECT esrb_rating, COUNT(esrb_rating) as count FROM raw_games
+    GROUP BY esrb_rating
+    ORDER BY count desc
+
+*Gather distinct titles where the platform score is highest
+
+  *STEP 1 CREATE NEW TABLE SORTED
+
+    CREATE TABLE test(
+         "title" TEXT,
+         "developer" TEXT,
+         "platform" TEXT,
+         "release_date" TEXT,
+         "critic_score" REAL,
+         "number_of_critics" INTEGER,
+         "user_score" REAL,
+         "number_of_users" INTEGER,
+         "player_mode" TEXT,
+         "esrb_rating" TEXT,
+         "genre" TEXT);
+    INSERT INTO test SELECT * FROM raw_games
+    ORDER BY user_score DESC, number_of_users DESC /* Multi-level sorting (nice)
+
+  *STEP 2 USE rowid FOR INDEXING THEN DELETE ROWS THAT COME AFTER THE FIRST INSTANCE OF A DUPLICATE YIELDS HIGHEST
+  SCORE FOR A TITLE 
+
+    DELETE FROM test
+    WHERE rowid NOT IN
+    (SELECT MIN(rowid) FROM test
+    GROUP BY title)
+
+*How to give a score more or less weight? # TODO
+
+*Need to reformat dates for date comparisons - Whoops..
+    SELECT title,
+    substr(release_date, 7) ||
+    substr(release_date, 1, 2) ||
+    substr(release_date, 4, 2) as formatted_date,
+    release_date FROM Raw_games
