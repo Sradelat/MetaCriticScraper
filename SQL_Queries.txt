@@ -25,13 +25,6 @@
     WHERE player_mode = ""
 
 *Find how many duplicates per title
-*5:
-  Grand Theft Auto V
-  Persona 5 Royal
-*4:
-  Tony Hawk's Pro Skater 1 + 2
-  Okami HD
-  Hades
     SELECT title, COUNT(title) as count from raw_games
     GROUP BY title
     ORDER BY count desc
@@ -61,7 +54,7 @@
     ORDER BY user_score DESC, number_of_users DESC /* Multi-level sorting (nice)
 
   *STEP 2 USE rowid FOR INDEXING THEN DELETE ROWS THAT COME AFTER THE FIRST INSTANCE OF A DUPLICATE YIELDS HIGHEST
-  SCORE FOR A TITLE 
+  SCORE FOR A TITLE
 
     DELETE FROM test
     WHERE rowid NOT IN
@@ -70,9 +63,33 @@
 
 *How to give a score more or less weight? # TODO
 
-*Need to reformat dates for date comparisons - Whoops..
+*Need to reformat dates for date comparisons - Whoops..  #TODO Give date correct type in order to do BETWEEN? also YYYY-MM-DD?
     SELECT title,
     substr(release_date, 7) ||
     substr(release_date, 1, 2) ||
     substr(release_date, 4, 2) as formatted_date,
     release_date FROM Raw_games
+
+*Number of games per platform - #TODO don't equalize. Can draw correlation after duplicate clean
+    SELECT platform, count(platform) AS count FROM test
+    GROUP BY platform
+    ORDER BY count DESC
+
+*Top Developers
+    SELECT developer, count(developer) AS count FROM raw_games
+    GROUP BY developer
+    ORDER BY count DESC
+
+*Count single player and multiplayer games
+    SELECT COUNT(player_mode) FILTER (WHERE player_mode = '1 Player' OR player_mode = 'No Online Multiplayer') AS Single_Player,
+    COUNT(player_mode) FILTER (WHERE player_mode != '1 Player' OR player_mode != 'No Online Multiplayer' OR player_mode IS NOT NULL) AS Multiplayer
+    FROM test
+
+*Find which games critics and users agree on the most
+
+*Find which games critics and users disagree on the most
+
+*Years ranked by number of games in each year
+    SELECT t, count(t) as year
+    FROM (SELECT substr(test.release_date, 7) as t FROM test) /* derived table in FROM clause to pull from first */
+    GROUP BY t
