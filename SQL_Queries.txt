@@ -29,6 +29,9 @@
     GROUP BY title
     ORDER BY count desc
 
+*Find all different ESRB Ratings
+    SELECT DISTINCT esrb_rating FROM test
+
 *Find popularity categorized by ESRB rating
     SELECT esrb_rating, COUNT(esrb_rating) as count FROM raw_games
     GROUP BY esrb_rating
@@ -61,7 +64,14 @@
     (SELECT MIN(rowid) FROM test
     GROUP BY title)
 
-*How to give a score more or less weight? # TODO
+*Give a preview of the data - also top 10 scoring games
+    SELECT * FROM test
+    LIMIT 10
+
+*Find games with very few ratings #TODO change to delete possibly to reduce inaccuracies
+    SELECT * FROM test
+    WHERE number_of_users < 50
+    ORDER BY number_of_users asc
 
 *Need to reformat dates for date comparisons - Whoops..  #TODO Give date correct type in order to do BETWEEN? also YYYY-MM-DD?
     SELECT title,
@@ -86,10 +96,45 @@
     FROM test
 
 *Find which games critics and users agree on the most
+    SELECT *, SQRT(POWER(critic_score - adj_user_score, 2)) as difference FROM (SELECT title, critic_score, user_score * 10 as adj_user_score FROM test)
+    ORDER BY difference ASC
 
 *Find which games critics and users disagree on the most
+    SELECT *, SQRT(POWER(critic_score - adj_user_score, 2)) as difference FROM (SELECT title, critic_score, user_score * 10 as adj_user_score FROM test)
+    ORDER BY difference DESC
+
+*Find which games users rate higher than critics
+    SELECT *, SQRT(POWER(critic_score - adj_user_score, 2)) as difference FROM (SELECT title, critic_score, user_score * 10 as adj_user_score FROM test)
+    WHERE adj_user_score > critic_score
+    ORDER BY difference DESC
+
+*Find which games users rate lower than critics
+    SELECT *, SQRT(POWER(critic_score - adj_user_score, 2)) as difference FROM (SELECT title, critic_score, user_score * 10 as adj_user_score FROM test)
+    WHERE adj_user_score < critic_score
+    ORDER BY difference DESC
 
 *Years ranked by number of games in each year
-    SELECT t, count(t) as year
+    SELECT t, count(t) as games_per_year
     FROM (SELECT substr(test.release_date, 7) as t FROM test) /* derived table in FROM clause to pull from first */
     GROUP BY t
+
+*Months ranked by number of games in each month
+    SELECT t, count(t) as games_per_month
+    FROM (SELECT substr(test.release_date, 1, 2) as t FROM test)
+    GROUP BY t
+
+*Filter by platform order by score
+    SELECT * FROM test
+    WHERE platform = "Switch"
+    ORDER BY critic_score DESC
+
+*Find games based on similar titles, or genres
+    SELECT * FROM test
+    WHERE title LIKE "%Mario%"
+
+*Pitting two genres' average scores against each other (of similar quantities)
+    SELECT AVG(shooter.user_score), AVG(rpg.user_score)
+    FROM (SELECT * FROM test WHERE genre LIKE "%Shooter%") as shooter,
+    (SELECT * FROM test WHERE genre LIKE "%RPG%") as rpg
+
+# TODO address genres with Python, rank developers based on avg of score?
