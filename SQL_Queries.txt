@@ -1,5 +1,8 @@
-*SQL Query for column data types
-    CREATE TABLE test(
+*SQL Query for table import - change path and title 'Test' as needed
+    select import('C:\Users\shawn\PycharmProjects\Scrape\Metacritic_Games.csv', 'CSV', 'Test', 'UTF-8',"")
+
+*Creating a back-up
+    CREATE TABLE final_games(
          "title" TEXT,
          "developer" TEXT,
          "platform" TEXT,
@@ -10,13 +13,25 @@
          "number_of_users" INTEGER,
          "player_mode" TEXT,
          "esrb_rating" TEXT,
-         "genre" TEXT)
+         "genre" TEXT);
 
-*SQL Query for table import - change path and title 'Test' as needed
-    select import('C:\Users\shawn\PycharmProjects\Scrape\Metacritic_Games.csv', 'CSV', 'Test', 'UTF-8',"")
+    INSERT INTO backup SELECT * FROM raw_games
+
+*Adding a formatted_date column
+    ALTER TABLE raw_games
+    ADD formatted_date INTEGER
+
+*Updating with formatted date values
+    UPDATE raw_games
+    SET formatted_date = substr(release_date, 7) ||substr(release_date, 1, 2) ||substr(release_date, 4, 2)
+
+*Find games between dates with new column
+    SELECT * FROM raw_games
+    WHERE formatted_date BETWEEN 20200000 AND 20231231
+    ORDER BY formatted_date
 
 *Experimenting with updates
-    Update Raw_Games
+    UPDATE Raw_Games
     SET esrb_rating = NULL
     WHERE esrb_rating = ""
 
@@ -29,19 +44,11 @@
     GROUP BY title
     ORDER BY count desc
 
-*Find all different ESRB Ratings
-    SELECT DISTINCT esrb_rating FROM test
-
-*Find popularity categorized by ESRB rating
-    SELECT esrb_rating, COUNT(esrb_rating) as count FROM raw_games
-    GROUP BY esrb_rating
-    ORDER BY count desc
-
-*Gather distinct titles where the platform score is highest
+*Filter out duplicate titles from other platforms with lower scores
 
   *STEP 1 CREATE NEW TABLE SORTED
 
-    CREATE TABLE test(
+    CREATE TABLE final_games(
          "title" TEXT,
          "developer" TEXT,
          "platform" TEXT,
@@ -52,89 +59,105 @@
          "number_of_users" INTEGER,
          "player_mode" TEXT,
          "esrb_rating" TEXT,
-         "genre" TEXT);
-    INSERT INTO test SELECT * FROM raw_games
+         "genre" TEXT,
+         "formatted_date" INTEGER);
+
+  *STEP 2 POPULATE TABLE WITH DESIRED ORDER
+
+    INSERT INTO final_games SELECT * FROM raw_games
     ORDER BY user_score DESC, number_of_users DESC /* Multi-level sorting (nice)
 
-  *STEP 2 USE rowid FOR INDEXING THEN DELETE ROWS THAT COME AFTER THE FIRST INSTANCE OF A DUPLICATE YIELDS HIGHEST
+  *STEP 3 USE rowid FOR INDEXING THEN DELETE ROWS THAT COME AFTER THE FIRST INSTANCE OF A DUPLICATE YIELDS HIGHEST
   SCORE FOR A TITLE
 
-    DELETE FROM test
+    DELETE FROM final_games
     WHERE rowid NOT IN
-    (SELECT MIN(rowid) FROM test
+    (SELECT MIN(rowid) FROM final_games
     GROUP BY title)
 
+*Find the average user score for each platform rounded
+    SELECT platform, ROUND(AVG(user_score), 2) as AVG_User_Score FROM final_games
+    GROUP BY platform
+    ORDER BY AVG_User_Score DESC
+
+*Find all different ESRB Ratings
+    SELECT DISTINCT esrb_rating FROM final_games
+
+*Find popularity categorized by ESRB rating
+    SELECT esrb_rating, COUNT(esrb_rating) as count FROM raw_games
+    GROUP BY esrb_rating
+    ORDER BY count desc
+
 *Give a preview of the data - also top 10 scoring games
-    SELECT * FROM test
+    SELECT * FROM final_games
     LIMIT 10
 
 *Find games with very few ratings #TODO change to delete possibly to reduce inaccuracies
-    SELECT * FROM test
+    SELECT * FROM final_games
     WHERE number_of_users < 50
     ORDER BY number_of_users asc
 
-*Need to reformat dates for date comparisons - Whoops..  #TODO Give date correct type in order to do BETWEEN? also YYYY-MM-DD?
-    SELECT title,
-    substr(release_date, 7) ||
-    substr(release_date, 1, 2) ||
-    substr(release_date, 4, 2) as formatted_date,
-    release_date FROM Raw_games
-
 *Number of games per platform - #TODO don't equalize. Can draw correlation after duplicate clean
-    SELECT platform, count(platform) AS count FROM test
+    SELECT platform, count(platform) AS count FROM final_games
     GROUP BY platform
     ORDER BY count DESC
 
 *Top Developers
-    SELECT developer, count(developer) AS count FROM raw_games
+    SELECT developer, count(developer) AS count FROM final_games
     GROUP BY developer
     ORDER BY count DESC
 
 *Count single player and multiplayer games
     SELECT COUNT(player_mode) FILTER (WHERE player_mode = '1 Player' OR player_mode = 'No Online Multiplayer') AS Single_Player,
     COUNT(player_mode) FILTER (WHERE player_mode != '1 Player' OR player_mode != 'No Online Multiplayer' OR player_mode IS NOT NULL) AS Multiplayer
-    FROM test
+    FROM final_games
 
 *Find which games critics and users agree on the most
-    SELECT *, SQRT(POWER(critic_score - adj_user_score, 2)) as difference FROM (SELECT title, critic_score, user_score * 10 as adj_user_score FROM test)
+    SELECT *, SQRT(POWER(critic_score - adj_user_score, 2)) as difference FROM (SELECT title, critic_score, user_score * 10 as adj_user_score FROM final_games)
     ORDER BY difference ASC
 
 *Find which games critics and users disagree on the most
-    SELECT *, SQRT(POWER(critic_score - adj_user_score, 2)) as difference FROM (SELECT title, critic_score, user_score * 10 as adj_user_score FROM test)
+    SELECT *, SQRT(POWER(critic_score - adj_user_score, 2)) as difference FROM (SELECT title, critic_score, user_score * 10 as adj_user_score FROM final_games)
     ORDER BY difference DESC
 
 *Find which games users rate higher than critics
-    SELECT *, SQRT(POWER(critic_score - adj_user_score, 2)) as difference FROM (SELECT title, critic_score, user_score * 10 as adj_user_score FROM test)
+    SELECT *, SQRT(POWER(critic_score - adj_user_score, 2)) as difference FROM (SELECT title, critic_score, user_score * 10 as adj_user_score FROM final_games)
     WHERE adj_user_score > critic_score
     ORDER BY difference DESC
 
 *Find which games users rate lower than critics
-    SELECT *, SQRT(POWER(critic_score - adj_user_score, 2)) as difference FROM (SELECT title, critic_score, user_score * 10 as adj_user_score FROM test)
+    SELECT *, SQRT(POWER(critic_score - adj_user_score, 2)) as difference FROM (SELECT title, critic_score, user_score * 10 as adj_user_score FROM final_games)
     WHERE adj_user_score < critic_score
     ORDER BY difference DESC
 
 *Years ranked by number of games in each year
     SELECT t, count(t) as games_per_year
-    FROM (SELECT substr(test.release_date, 7) as t FROM test) /* derived table in FROM clause to pull from first */
+    FROM (SELECT substr(final_games.release_date, 7) as t FROM final_games) /* derived table in FROM clause to pull from first */
     GROUP BY t
 
 *Months ranked by number of games in each month
     SELECT t, count(t) as games_per_month
-    FROM (SELECT substr(test.release_date, 1, 2) as t FROM test)
+    FROM (SELECT substr(final_games.release_date, 1, 2) as t FROM final_games)
     GROUP BY t
 
 *Filter by platform order by score
-    SELECT * FROM test
+    SELECT * FROM final_games
     WHERE platform = "Switch"
     ORDER BY critic_score DESC
 
 *Find games based on similar titles, or genres
-    SELECT * FROM test
+    SELECT * FROM final_games
     WHERE title LIKE "%Mario%"
 
 *Pitting two genres' average scores against each other (of similar quantities)
     SELECT AVG(shooter.user_score), AVG(rpg.user_score)
-    FROM (SELECT * FROM test WHERE genre LIKE "%Shooter%") as shooter,
-    (SELECT * FROM test WHERE genre LIKE "%RPG%") as rpg
+    FROM (SELECT * FROM final_games WHERE genre LIKE "%Shooter%") as shooter,
+    (SELECT * FROM final_games WHERE genre LIKE "%RPG%") as rpg
 
 # TODO address genres with Python, rank developers based on avg of score?
+
+# TODO level out critic and user scores instead of 100 and 10 make them equal
+
+# TODO what do these top games have in common? what is popular? why are they successful?
+
+# TODO 'export' tables from sqlitestudio as needed
