@@ -92,7 +92,7 @@
     SELECT * FROM final_games
     LIMIT 10
 
-*Find games with very few ratings #TODO change to delete possibly to reduce inaccuracies
+*Find games with very few ratings - Could delete these to reduce inaccurate data
     SELECT * FROM final_games
     WHERE number_of_users < 50
     ORDER BY number_of_users asc
@@ -154,9 +154,11 @@
     FROM (SELECT * FROM final_games WHERE genre LIKE "%Shooter%") as shooter,
     (SELECT * FROM final_games WHERE genre LIKE "%RPG%") as rpg
 
-# TODO address genres with Python, rank developers based on avg of score?
+*Equalize critic score and user score - probably not necessary for visualization in Tableau
+    UPDATE final_games
+    SET user_score = user_score * 10
 
-# TODO level out critic and user scores instead of 100 and 10 make them equal
+# TODO rank developers based on avg of score?
 
 # TODO what do these top games have in common? what is popular? why are they successful?
 
