@@ -1,4 +1,4 @@
-# Python Metacritic Scraper + SQL Database Queries (WIP)
+# Python Metacritic Scraper + SQL Database Queries
 *What correlations can be drawn between top-rated games from Metacritic?*
 
 Follow this link to view the final Metacritic Tableau Dashboards:
