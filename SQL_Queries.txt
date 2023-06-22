@@ -1,3 +1,5 @@
+** What do these games have in common? What makes them successful? Are users and critics rating differently? **
+
 *SQL Query for table import - change path and title 'Test' as needed
     select import('C:\Users\shawn\PycharmProjects\Scrape\Metacritic_Games.csv', 'CSV', 'Test', 'UTF-8',"")
 
@@ -97,7 +99,7 @@
     WHERE number_of_users < 50
     ORDER BY number_of_users asc
 
-*Number of games per platform - #TODO don't equalize. Can draw correlation after duplicate clean
+*Number of games per platform
     SELECT platform, count(platform) AS count FROM final_games
     GROUP BY platform
     ORDER BY count DESC
@@ -157,9 +159,3 @@
 *Equalize critic score and user score - probably not necessary for visualization in Tableau
     UPDATE final_games
     SET user_score = user_score * 10
-
-# TODO rank developers based on avg of score?
-
-# TODO what do these top games have in common? what is popular? why are they successful?
-
-# TODO 'export' tables from sqlitestudio as needed
