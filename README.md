@@ -24,3 +24,13 @@ critic score, number of critics, user score, number of users, player mode, ESRB 
 The point of having a text file with all my SQL queries is really just to "show my work." However, it has proven
 useful to have these queries documented for myself to return to at a later time. The ultimate goal with this project
 is to present the data that I have manipulated in PowerBI or another similar program.
+
+### Why Genre_Splitter.py?
+
+My scraper compiled all of the data and kept it all categorized. However, I needed to be able to access the multiple genres
+in any given row individually. In order to do that, I had to write this script to write a new CSV with the counts of all of
+the genres.
+
+### Where can I find the Tableau Dashboard you created?
+
+On my Tableu profile! Prefixed with Metacritic. Click here: https://public.tableau.com/app/profile/shawn.radelat
