@@ -19,6 +19,11 @@ Playstation 5, Xbox One, Xbox Series X, and PC.
 The categories of data that I scraped for each game are as follows: title, developer, platform, release date, 
 critic score, number of critics, user score, number of users, player mode, ESRB rating, genre
 
+### What are the CSV files?
+
+Metacritic_Games.csv is the direct result of running Scraper.py. Metacritic_Genres.csv is the direct result of
+running Genre_Splitter.csv.
+
 ### What is the goal of the SQL Queries?
 
 The point of having a text file with all my SQL queries is really just to "show my work." However, it has proven
