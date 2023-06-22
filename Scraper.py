@@ -4,10 +4,6 @@ import time
 import csv
 from datetime import datetime, timedelta
 import random
-import pandas as pd
-import regex as re
-
-# TODO Create separate table for genres. That table can be manipulated with pandas to get counts
 
 # ACCESSES HTML CODE
 # TooManyRequests error required me to find headers in devtools->network->click top name of waterfall->request headers
@@ -16,7 +12,7 @@ headers = {  # infinite redirects to MetaCritic without headers
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36"
 }
 
-list_URL = [
+list_URL = [  # links manually taken from website
     "https://www.metacritic.com/browse/games/score/metascore/all/ps5/filtered",
     "https://www.metacritic.com/browse/games/score/metascore/all/pc/filtered",
     "https://www.metacritic.com/browse/games/score/metascore/all/switch/filtered",
@@ -24,26 +20,27 @@ list_URL = [
     "https://www.metacritic.com/browse/games/score/metascore/all/ps4/filtered",
     "https://www.metacritic.com/browse/games/score/metascore/all/xboxone/filtered"
 ]
-input(f"Press enter to send request for URL list. ({len(list_URL)} requests)")
 
-# Waiting time pool
+input(f"Press enter to send request for URL list. ({len(list_URL)} requests)")  # SAFETY STOP
+
+# Sleep time pool
 choices = [1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 3]
 
 # LINK LIST CREATOR
 # link_list = ["https://www.metacritic.com/game/xbox-one/inside"]  # for testing comment below loop
-link_list = []
+link_list = []  # links get appended into here
 for url in list_URL:
     list_page = requests.get(url, headers=headers)
     parser = BeautifulSoup(list_page.text, "html.parser")
     raw_list = parser.find_all("a", attrs="title")  # pull list of all games on top 100 page
-    for game in raw_list:  # format links for ease of use later
-        link_list.append("https://www.metacritic.com" + game["href"])
+    for game in raw_list:
+        link_list.append("https://www.metacritic.com" + game["href"])  # format links for ease of use later
     # DELAY
     print("\nLoading link list..\n")  # Please don't block me
     time.sleep(random.choice(choices))
 
 # PARSES HTML FOR FUTURE COLUMNS
-debug_mode = False  # In an effect to not make a mistake and get blocked
+debug_mode = False  # In an effort to not make a mistake and get blocked
 if debug_mode is True:
     input(f"Press enter to initiate link list loop. ({len(link_list)} requests) **DEBUG MODE ON**")
 else:
@@ -51,7 +48,7 @@ else:
     input(f"!!WARNING!! DEBUG MODE IS OFF. ARE YOU SURE?")
 
 # CREATE HEADERS
-csv_headers = [
+csv_headers = [  # solely for first line of csv
     {"title": "",
      "developer": "",
      "platform": "",
@@ -73,19 +70,20 @@ for url in link_list:
     print(f"Index: {link_list.index(url)}")  # bookmark in case of crash - used once to pick up where left off
     value_page = requests.get(url, headers=headers)
     value_parser = BeautifulSoup(value_page.text, "html.parser")
-    # COLUMN VARIABLES
+
+    # COLUMN VARIABLES - Defining variables to slot into columns
     title = value_parser.find("h1").string
     developer = value_parser.find("span", string="Developer:").find_next_sibling().find("a").string
     platform = value_parser.find("span", attrs={"class": "platform"}).find("a").string.strip()
 
     release = value_parser.find("span", string="Release Date:").find_next_sibling().string  # starts as string
-    datetime_release = datetime.strptime(release, "%b %d, %Y")  # Lesson learned - convert to datetime with parse
-    if datetime_release + timedelta(days=3) > datetime.today():  # Games with no reviews get skipped
+    datetime_release = datetime.strptime(release, "%b %d, %Y")  # lesson learned - convert to datetime with parse
+    if datetime_release + timedelta(days=3) > datetime.today():  # unreleased games get skipped
         print(title)
         print("UNRELEASED GAME DETECTED.")
         continue
     formatted_date = datetime_release.strftime("%m/%d/%Y")  # formatted as desired
-    # Date format ended up not being compatible with SQLite. WHOOPS
+    # Date format ended up not being compatible with SQLite. WHOOPS - Now fixed in SQL
 
     meta_score = float(value_parser.find(itemprop="ratingValue").string)
     critics = int(value_parser.find("span", string="based on").find_next().find_next("span").string.strip())
@@ -118,9 +116,10 @@ for url in link_list:
             genres += f"{i.string}"
         else:
             genres += f"{i.string}, "
+    # genres formed a comma separated string which needs to be parsed later with pandas
 
     # WRITE CSV
-    categories = [
+    categories = [  # this time with variables
         {
             "title": title,
             "developer": developer,
@@ -138,7 +137,7 @@ for url in link_list:
 
     with open("Metacritic_Games.csv", "a", newline="") as f:  # writes one row of data each iteration
         writer = csv.DictWriter(f, fieldnames=categories[0].keys())
-        writer.writerow(categories[0])
+        writer.writerow(categories[0])  # writes dictionary categories in order in a row
 
     # DEBUG PRINTS
     print(
