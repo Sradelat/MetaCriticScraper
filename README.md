@@ -28,7 +28,7 @@ running Genre_Splitter.csv.
 
 The point of having a text file with all my SQL queries is really just to "show my work." However, it has proven
 useful to have these queries documented for myself to return to at a later time. The ultimate goal with this project
-is to present the data that I have manipulated in PowerBI or another similar program.
+is to present the data that I have manipulated in PowerBI or Tableau.
 
 ### Why Genre_Splitter.py?
 
