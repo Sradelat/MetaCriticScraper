@@ -21,7 +21,8 @@ list_URL = [  # links manually taken from website
     "https://www.metacritic.com/browse/games/score/metascore/all/xboxone/filtered"
 ]
 
-input(f"Press enter to send request for URL list. ({len(list_URL)} requests)")  # SAFETY STOP
+# SAFETY STOP WITH CONFIRMATION
+input(f"Press enter to send request for URL list. ({len(list_URL)} requests)")  
 
 # Sleep time pool
 choices = [1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 3]
@@ -39,7 +40,7 @@ for url in list_URL:
     print("\nLoading link list..\n")  # Please don't block me
     time.sleep(random.choice(choices))
 
-# PARSES HTML FOR FUTURE COLUMNS
+# DEBUG SETTING - Safety stop either way
 debug_mode = False  # In an effort to not make a mistake and get blocked
 if debug_mode is True:
     input(f"Press enter to initiate link list loop. ({len(link_list)} requests) **DEBUG MODE ON**")
@@ -68,8 +69,8 @@ with open("Metacritic_Games.csv", "w", newline="") as f:  # writes new table hea
 # ITERATE LINKS AND WRITE ROWS
 for url in link_list:
     print(f"Index: {link_list.index(url)}")  # bookmark in case of crash - used once to pick up where left off
-    value_page = requests.get(url, headers=headers)
-    value_parser = BeautifulSoup(value_page.text, "html.parser")
+    value_page = requests.get(url, headers=headers)  # request
+    value_parser = BeautifulSoup(value_page.text, "html.parser")  # contains HTML text
 
     # COLUMN VARIABLES - Defining variables to slot into columns
     title = value_parser.find("h1").string
@@ -83,13 +84,13 @@ for url in link_list:
         print("UNRELEASED GAME DETECTED.")
         continue
     formatted_date = datetime_release.strftime("%m/%d/%Y")  # formatted as desired
-    # Date format ended up not being compatible with SQLite. WHOOPS - Now fixed in SQL
+    # Date format ended up not being compatible with SQLite. Fixed with SQL
 
     meta_score = float(value_parser.find(itemprop="ratingValue").string)
     critics = int(value_parser.find("span", string="based on").find_next().find_next("span").string.strip())
 
     try:
-        pre_user_score = value_parser.find("div", attrs={"class": "userscore_wrap feature_userscore"})
+        pre_user_score = value_parser.find("div", attrs={"class": "userscore_wrap feature_userscore"})  # find correct parent
         user_score = float(pre_user_score.find("a").find("div").string)
         users = int(pre_user_score.find_all("a")[1].string.split()[0])
     except (ValueError, AttributeError):  # games with no reviews get skipped
@@ -110,7 +111,7 @@ for url in link_list:
         print("NULL VALUE DETECTED")
 
     raw_genre = value_parser.find("span", string="Genre(s): ").find_next_siblings()
-    genres = ""
+    genres = "" 
     for i in raw_genre:
         if i is raw_genre[-1]:
             genres += f"{i.string}"
@@ -118,8 +119,8 @@ for url in link_list:
             genres += f"{i.string}, "
     # genres formed a comma separated string which needs to be parsed later with pandas
 
-    # WRITE CSV
-    categories = [  # this time with variables
+    # WRITE CSV - Insert variables
+    categories = [
         {
             "title": title,
             "developer": developer,
@@ -131,7 +132,7 @@ for url in link_list:
             "number_of_users": users,
             "player_mode": players,
             "esrb_rating": esrb,
-            "genre": genres  # comma escape happens automatically - noice
+            "genre": genres
          }
     ]
 
@@ -153,6 +154,7 @@ for url in link_list:
     genre = f"Genre(s): {genres}\n"
     print(genre)
 
+    # DEBUG SETTING - Will stop after a defined amount of iterations
     if debug_mode is True:
         if url == link_list[8]:
             print("**DEBUG STOP**")
