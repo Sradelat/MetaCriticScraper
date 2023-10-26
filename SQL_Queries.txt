@@ -1,7 +1,7 @@
 ** What do these games have in common? What makes them successful? Are users and critics rating differently? **
 
 *SQL Query for table import - change path and title 'Test' as needed
-    select import('C:\Users\shawn\PycharmProjects\Scrape\Metacritic_Games.csv', 'CSV', 'Test', 'UTF-8',"")
+    select import('C:\Users\shawn\PycharmProjects\Scrape\Metacritic_Games.csv', 'CSV', 'raw_games', 'UTF-8',"")
 
 *Creating a back-up
     CREATE TABLE final_games(
